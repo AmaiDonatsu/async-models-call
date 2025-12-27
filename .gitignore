@@ -1,0 +1,4 @@
+env/
+__pycache__/
+models/siglip_onnx/
+logs/*.log

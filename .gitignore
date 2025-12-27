@@ -1,4 +1,5 @@
-env/
+env
 __pycache__/
 models/siglip_onnx/
+models/ms-marco-onnx/
 logs/*.log

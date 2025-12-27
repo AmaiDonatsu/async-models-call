@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "text": "women with long hair",
+      "score": 0.05247710272669792
+    },
+    {
+      "text": "women standing",
+      "score": 0.2575403153896332
+    },
+    {
+      "text": "women with athletic build",
+      "score": 0.5657185912132263
+    },
+    {
+      "text": "women stretching",
+      "score": 0.1242639496922493
+    }
+  ]
+}

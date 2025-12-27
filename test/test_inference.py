@@ -4,11 +4,11 @@ from PIL import Image
 import io
 import numpy as np
 
-def create_dummy_image():
-    # Create a 100x100 red image
-    img = Image.new('RGB', (100, 100), color = 'red')
+def load_test_image(image_path="imgs/img1.png"):
+    # Load image from path
+    img = Image.open(image_path)
     img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format='JPEG')
+    img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
     return img_byte_arr
 
@@ -16,17 +16,19 @@ def test_match():
     url = "http://127.0.0.1:8000/img-text-match"
     
     # Prepare data
-    img_bytes = create_dummy_image()
-    texts = ["a red square", "a blue square", "a green square"]
+    img_path = "imgs/img1.png"
+    img_bytes = load_test_image(img_path)
+    texts = [ "women with long hair", "women standing","women with athletic build", "women stretching"]
     
     files = {
-        'image': ('test.jpg', img_bytes, 'image/jpeg')
+        'image': (img_path, img_bytes, 'image/png')
     }
     data = {
         'texts': json.dumps(texts)
     }
     
     try:
+        print(f"Sending request to {url} with image {img_path}...")
         response = requests.post(url, files=files, data=data)
         
         if response.status_code == 200:

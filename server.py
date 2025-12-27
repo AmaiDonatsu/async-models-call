@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from api.classes.model_utils import SigLIPModel
+from api.classes.model_utils import SigLIPModel, MsMarcoModel
 from api.routes.call_models import CallModels
 from contextlib import asynccontextmanager
 from loguru import logger
@@ -14,22 +14,33 @@ scripts.unblock_port_8000.kill_process_on_port(8000)
 
 setup_logging()
 
-model = None
+siglip_model = None
+ms_marco_model = None
 
-call_models_routes = CallModels(model)
+call_models_routes = CallModels(siglip_model, ms_marco_model)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the model on startup
-    global model, call_models_routes
-    model_path = "./models/siglip_onnx"
+    # Load the models on startup
+    global siglip_model, ms_marco_model, call_models_routes
+    siglip_model_path = "./models/siglip_onnx"
+    ms_marco_model_path = "./models/ms-marco-onnx"
+    
+    # Load SigLIP
     try:
-        model = SigLIPModel(model_path)
-        call_models_routes.model = model  # Actualizar el modelo en la instancia existente
-        logger.info(f"Model loaded successfully from {model_path}")
-        logger.info(f"call_models_routes.model: {call_models_routes.model}")
+        siglip_model = SigLIPModel(siglip_model_path)
+        call_models_routes.siglip_model = siglip_model
+        logger.info(f"SigLIP model loaded successfully from {siglip_model_path}")
     except Exception as e:
-        logger.error(f"Error loading model: {e}")
+        logger.error(f"Error loading SigLIP model: {e}")
+        
+    # Load MS MARCO
+    try:
+        ms_marco_model = MsMarcoModel(ms_marco_model_path)
+        call_models_routes.ms_marco_model = ms_marco_model
+        logger.info(f"MS MARCO model loaded successfully from {ms_marco_model_path}")
+    except Exception as e:
+        logger.error(f"Error loading MS MARCO model: {e}")
     yield
     # Clean up on shutdown if needed
     pass
@@ -60,7 +71,8 @@ async def health_check():
     logger.info("Health check endpoint accessed") 
     return {
         "status": "healthy",
-        "model_loaded": model is not None
+        "siglip_loaded": siglip_model is not None,
+        "ms_marco_loaded": ms_marco_model is not None
     }
 
 @app.get("/error-test")

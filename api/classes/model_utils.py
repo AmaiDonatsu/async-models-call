@@ -3,6 +3,8 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from transformers import AutoProcessor, AutoTokenizer
+from optimum.onnxruntime import ORTModelForSequenceClassification
+import torch
 
 class SigLIPModel:
     def __init__(self, model_path: str):
@@ -66,3 +68,34 @@ class SigLIPModel:
         x_max = np.max(x, axis=axis, keepdims=True)
         exp_x = np.exp(x - x_max)
         return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+
+class MsMarcoModel:
+    def __init__(self, model_path: str):
+        self.model_path = model_path
+        
+        # Load model and tokenizer using Optimum
+        self.model = ORTModelForSequenceClassification.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        
+    def rerank(self, query: str, passages: list[str]):
+        # Prepare inputs
+        queries = [query] * len(passages)
+        features = self.tokenizer(queries, passages, padding=True, truncation=True, return_tensors="pt")
+        
+        # Perform inference
+        with torch.no_grad():
+            outputs = self.model(**features)
+            scores = outputs.logits
+            
+        # Convert scores to list for JSON response
+        results = []
+        for i, passage in enumerate(passages):
+            results.append({
+                "passage": passage,
+                "score": float(scores[i][0])
+            })
+            
+        # Sort by score descending
+        results.sort(key=lambda x: x["score"], reverse=True)
+        
+        return results

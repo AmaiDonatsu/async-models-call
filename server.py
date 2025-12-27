@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from api.classes.model_utils import SigLIPModel
 from api.routes.call_models import CallModels
@@ -34,6 +35,14 @@ async def lifespan(app: FastAPI):
     pass
 
 app = FastAPI(title="Async Models Call API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 

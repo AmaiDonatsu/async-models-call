@@ -6,9 +6,10 @@ def test_rerank():
     
     query = "How many people live in Berlin?"
     passages = [
-        "Berlin has a population of 3.5 million people.",
+        "hotdogs with capsicum",
         "The Eiffel Tower is in Paris.",
-        "Germany is a country in Europe."
+        "Germany is a country in Europe.",
+        "The city is the center of the Berlin-Brandenburg Metropolitan Region with a population of 5.8 million people from more than 180 countries."
     ]
     
     data = {

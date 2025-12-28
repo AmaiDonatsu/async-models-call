@@ -1,0 +1,16 @@
+env/
+.env
+__pycache__/
+*.pyc
+.git/
+.vscode/
+journals/
+.gemini/
+test/
+scripts/export_ms_marco_onnx.py
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/venv
+**/env

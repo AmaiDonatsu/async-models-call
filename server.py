@@ -5,12 +5,16 @@ from api.classes.model_utils import SigLIPModel, MsMarcoModel
 from api.routes.call_models import CallModels
 from contextlib import asynccontextmanager
 from loguru import logger
-import sys
-from datetime import datetime
 from api.utils.logging_config import setup_logging
-import scripts.unblock_port_8000
+import os
+from dotenv import load_dotenv
 
-scripts.unblock_port_8000.kill_process_on_port(8000)
+load_dotenv()
+DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1", "t"]
+
+if DEBUG:
+    import scripts.unblock_port_8000
+    scripts.unblock_port_8000.kill_process_on_port(8000)
 
 setup_logging()
 

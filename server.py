@@ -12,6 +12,15 @@ from dotenv import load_dotenv
 load_dotenv()
 DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1", "t"]
 
+# Security Configuration
+IP_ALLOWED = os.getenv("IP_ALLOWED")
+ASYNC_CONTROL_DOMAIN = os.getenv("ASYNC_CONTROL_DOMAIN")
+ASYNC_SERVER_DOMAIN = os.getenv("ASYNC_SERVER_DOMAIN")
+
+ALLOWED_DOMAINS = [d for d in [ASYNC_CONTROL_DOMAIN, ASYNC_SERVER_DOMAIN] if d]
+if DEBUG:
+    ALLOWED_DOMAINS.append("*")  # Allow all in debug if needed, or keep specific for stricter testing
+
 if DEBUG:
     import scripts.unblock_port_8000
     scripts.unblock_port_8000.kill_process_on_port(8000)
@@ -49,11 +58,40 @@ async def lifespan(app: FastAPI):
     # Clean up on shutdown if needed
     pass
 
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+
 app = FastAPI(title="Async Models Call API", lifespan=lifespan)
+
+# IP and Domain Security Middleware
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+
+    client_ip = request.client.host
+    origin = request.headers.get("origin")
+    
+    is_ip_allowed = (IP_ALLOWED and client_ip == IP_ALLOWED)
+    
+    is_domain_allowed = False
+    if origin:
+        is_domain_allowed = any(domain in origin for domain in ALLOWED_DOMAINS if domain != "*")
+    
+    if DEBUG and client_ip in ["127.0.0.1", "::1"]:
+        is_ip_allowed = True
+
+    if not (is_ip_allowed or is_domain_allowed or "*" in ALLOWED_DOMAINS):
+        logger.warning(f"Access denied for IP: {client_ip}, Origin: {origin}")
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Access denied. IP or Domain not authorized."}
+        )
+
+    response = await call_next(request)
+    return response
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_DOMAINS if ALLOWED_DOMAINS else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
